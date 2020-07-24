@@ -1,2 +1,2 @@
 # Powershell scripts
-An area for any userful powershell scripts i've picked up on my travels.
+An area for any userful powershell scripts I've picked up or developed on my travels.
