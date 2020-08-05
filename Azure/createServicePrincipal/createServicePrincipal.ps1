@@ -7,11 +7,17 @@ param(
     [Parameter(Mandatory)]
     [String]$DisplayName
 )
-
+function Get-AccessToken {
+    $context = Get-AzContext
+    $profile = [Microsoft.Azure.Commands.Common.Authentication.Abstractions.AzureRmProfileProvider]::Instance.Profile
+    $profileClient = New-Object -TypeName Microsoft.Azure.Commands.ResourceManager.Common.RMProfileClient -ArgumentList ($profile)
+    $token = $profileClient.AcquireAccessToken($context.Subscription.TenantId)
+    return $token.AccessToken
+}
 process {
     try {
-        # Login to Azure AD PowerShell With Admin Account (you need to be Azure AD admin to create the cert)
-        Connect-AzureAD -ErrorAction stop
+        # Login to Azure AD PowerShell With Admin Account (you need to be Azure AD admin to create the cert) 
+        Connect-AzAccount -ErrorAction stop
         Import-Module -Name Az.Resources -ErrorAction stop
         # Create the self signed cert and export
         $currentDate = Get-Date -ErrorAction stop
@@ -26,13 +32,13 @@ process {
         $sp = New-AzAdServicePrincipal -DisplayName $DisplayName -CertValue $keyValue -EndDate $endDate -StartDate $currentDate -ErrorAction stop
         # Get Tenant Detail
         $tenant = Get-AzTenant -ErrorAction stop
-        # Now you can login to Azure PowerShell with your Service Principal and Certificate
-
+        # Get bearer token for Graph API from current login creds
     }
     Catch {
         Write-Warning $Error[0]
     }
     Finally {
+        # Now you can login to Azure PowerShell with your Service Principal and Certificate
         Write-Host -ForegroundColor blue "You connection string is:
         Connect-AzureAD -TenantId $($Tenant.id) -ApplicationId $($sp.ApplicationId) -CertificateThumbprint $($thumb)
         Please do not include the App ID and Thumbprint in plain text in your script"
